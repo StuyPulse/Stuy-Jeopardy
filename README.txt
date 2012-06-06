@@ -1,0 +1,1 @@
+This is the Arduino code for the Jeopardy system that we manage for the Stuyvesant High School Parent's Association. It has generally been set up with one teacher, one parent, one alumnus, and one team of students as the four competitors and one moderator running the show.
