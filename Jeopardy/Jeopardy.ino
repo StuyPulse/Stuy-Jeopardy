@@ -15,15 +15,37 @@
 * - A contestant has 5 seconds to answer a question after buzzing and being selected to answer.
 */
 
-unsigned int contest_pin[] = {5,6,7,8,9,10,11,12}; // GPIO pins on buzzer #s 0-3
+unsigned int contest_pin[] = {9,10,11,12}; // GPIO pins on buzzer #s 0-3
 unsigned int moderator_pin = 5; // GPIO pin on the moderator button
 
-unsigned int contest_light[] = {0,1,2,3,4}; // GPIO pins on light #s 0-3
-unsigned int moderator_light = 0;
+unsigned int contest_light[] = {0,1,2,0,1,2,3,4}; // GPIO pins on light #s 0-3
+unsigned int moderator_light = 3;
 
-unsigned int claxon_pin = 12; // GPIO pin on the speaker
+boolean correct_answer = false;
+
+unsigned int claxon_pin = 4; // GPIO pin on the speaker
 int i; // iterator
 
+boolean answers[] = {false, false, false, false};
+
+
+boolean hasAnswered(int contestant) {
+  if (contestant > 2) {
+    return answers[3];
+  }
+  else {
+    return answers[contestant];
+  }
+}
+
+void setAnswer(int contestant, boolean set) {
+  if (contestant > 2) {
+    answers[3] = set;
+  }
+  else {
+    answers[contestant] = set;
+  }
+}
 void setup() {
   Serial.begin(9600);
   
@@ -38,21 +60,34 @@ void setup() {
   i = 0; // initialize iterator
 }
 
+void lightOn(int pin) {
+  //turn on correct pin
+}
 void loop() {
-  if (isPressed(contest_pin[i])) {
+  if (isPressed(i) && !hasAnswered(i)) {
+    // if contestant who *can* answer questions...
     int start = millis();
+    
+    lightOn(i); //enable that light
+    //signalStart(); //Sound the claxon!
     
     digitalWrite(contest_light[i], HIGH); // turn the light on
     tone(claxon_pin, 150, 200); //------ pulse the speaker on
     
     while (millis() - start < 5000) {
-      if (isPressed(moderator_pin))
+      if (isPressed(moderator_pin)) {
+       correct_answer = true;
         break;
+      }
     }
     // give contestant 5 seconds to respond
     
+    if (!correct_answer) {
+      setAnswer(i, true);
+    }
     soundEnd(claxon_pin);
-    digitalWrite(contest_light[i], LOW);
+    digitalWrite(contest_light[i], LOW); //light off
+    // signalEnd();
     // signal that the waiting period is over or question has been answered
   }
   
