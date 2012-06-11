@@ -15,83 +15,72 @@
 * - A contestant has 5 seconds to answer a question after buzzing and being selected to answer.
 */
 
-unsigned int contest_pin[] = {9,10,11,12}; // GPIO pins on buzzer #s 0-3
-unsigned int moderator_pin = 5; // GPIO pin on the moderator button
+unsigned int contest_pin[] = {A0,A1,A2,A3,A4,A5,2}; // input lines for buttons; the first 6 (0-5) are analog ins; the last one is a digital
+unsigned int moderator_pin = 3; // input line for moderator button (digital input)
 
-unsigned int contest_light[] = {0,1,2,0,1,2,3,4}; // GPIO pins on light #s 0-3
-unsigned int moderator_light = 3;
+unsigned int contest_light[] = {6,7,8,9,10,11,12}; // output lines for lights
+// unsigned int moderator_light = 3; // why is this here????
 
 boolean correct_answer = false;
 
 unsigned int claxon_pin = 4; // GPIO pin on the speaker
 int i; // iterator
 
-boolean answers[] = {false, false, false, false};
+boolean hasAnswered[] = {false, false, false, false};
 
-
-boolean hasAnswered(int contestant) {
-  if (contestant > 2) {
-    return answers[3];
-  }
-  else {
-    return answers[contestant];
-  }
-}
-
-void setAnswer(int contestant, boolean set) {
-  if (contestant > 2) {
-    answers[3] = set;
-  }
-  else {
-    answers[contestant] = set;
-  }
-}
 void setup() {
   Serial.begin(9600);
   
-  for (i = 0; i < 4; i++)  {
+  for (i = 0; i < 7; i++)  {
     pinMode(contest_pin[i], INPUT); // allocate and configure contestant input lines
     pinMode(contest_light[i], OUTPUT); // allocate and configure contestant output lines
   }
   pinMode(moderator_pin, INPUT); // allocate and configure moderator input
-  pinMode(moderator_light, OUTPUT);
+  //pinMode(moderator_light, OUTPUT);
   pinMode(claxon_pin, OUTPUT); // allocate and configure speaker line
   
   i = 0; // initialize iterator
 }
 
-void lightOn(int pin) {
-  //turn on correct pin
-}
 void loop() {
-  if (isPressed(i) && !hasAnswered(i)) {
+  if (isPressed(i) && !getAnsweredState(i)) {
     // if contestant who *can* answer questions...
     int start = millis();
     
-    lightOn(i); //enable that light
-    //signalStart(); //Sound the claxon!
+    lightSet(i, HIGH); //enable that light
+    signalStart(claxon_pin); //Sound the claxon!
     
-    digitalWrite(contest_light[i], HIGH); // turn the light on
-    tone(claxon_pin, 150, 200); //------ pulse the speaker on
-    
-    while (millis() - start < 5000) {
-      if (isPressed(moderator_pin)) {
-       correct_answer = true;
+    while (millis() - start < 5000) { // 5 seconds to respond
+      if (isPressed(moderator_pin)) { //moderator confirms answer is correct
+        correct_answer = true;
         break;
       }
     }
-    // give contestant 5 seconds to respond
     
-    if (!correct_answer) {
-      setAnswer(i, true);
-    }
-    soundEnd(claxon_pin);
-    digitalWrite(contest_light[i], LOW); //light off
-    // signalEnd();
-    // signal that the waiting period is over or question has been answered
+    if (correct_answer)
+      resetAnswers;
+    else
+      setAnswerState(i, true);
+    
+    signalEnd(claxon_pin); // signal that the waiting period is over or question has been answered
+    lightSet(i, LOW); //light off
   }
   
-  i = (i +1) % 4; //
+  i = (i + 1) % 7;//cycle thru 7 contestants
+}
+
+boolean getAnsweredState(int contestant) {
+  if (contestant > 2)
+    return hasAnswered[3];
+  else
+    return hasAnswered[contestant];
+}
+
+void setAnswerState(int contestant, boolean set) {
+  if (contestant > 2)
+    hasAnswered[3] = set;
+  else
+    hasAnswered[contestant] = set;
 }
 
 boolean isPressed(unsigned int pin) { // All the switches are pulled up
@@ -101,15 +90,35 @@ boolean isPressed(unsigned int pin) { // All the switches are pulled up
     return true;
 }
 
-void soundEnd(unsigned int speaker_line) {
+void resetAnswers() {
+  for( int i = 0; i < 4; i++)
+    hasAnswered[i] = false;
+}
+
+void lightSet(unsigned int light_pin, boolean state) {
+  digitalWrite(light_pin, state);
+}
+
+void signalStart(unsigned int speaker_line) {
+  int frequency = 150;
+  int duration = 200;
+  
+  tone(speaker_line, frequency);
+  delay(duration);
+  noTone(speaker_line);
+}
+
+void signalEnd(unsigned int speaker_line) {
   //pulses the speaker twice in quick succession
   
   int frequency = 300; // in Hz
   int duration = 75; //in msec
   
-  tone(speaker_line, frequency, duration);
+  tone(speaker_line, frequency);
+  delay(duration);
   noTone(speaker_line);
   delay(50);
-  tone(speaker_line, frequency, duration);
+  tone(speaker_line, frequency);
+  delay(duration);
   noTone(speaker_line);
 }
