@@ -43,27 +43,41 @@ void setup() {
 }
 
 void loop() {
-  if (isPressed(i) && !getAnsweredState(i)) {
+  Serial.print("loop conditions: ");
+  Serial.print(isPressed(i)); Serial.print(", ");
+  Serial.println( (getAnsweredState(i) == false) );
+  if (isPressed(i) && (getAnsweredState(i) == false)) {
+    Serial.print("i is ");
+    Serial.println(i);
+    Serial.print("isPressed says ");
+    Serial.println(isPressed(i));
+    Serial.print("not getAnsweredState says ");
+    Serial.println(!getAnsweredState(i));
     // if contestant who *can* answer questions...
-    int start = millis();
+    long int start = millis();
     
     lightSet(i, HIGH); //enable that light
     signalStart(claxon_pin); //Sound the claxon!
     
     while (millis() - start < 5000) { // 5 seconds to respond
-      if (isPressed(moderator_pin)) { //moderator confirms answer is correct
+      if (!digitalRead(moderator_pin)) { //moderator confirms answer is correct
         correct_answer = true;
         break;
       }
     }
     
     if (correct_answer)
-      resetAnswers;
+      resetAnswers();
     else
       setAnswerState(i, true);
     
     signalEnd(claxon_pin); // signal that the waiting period is over or question has been answered
     lightSet(i, LOW); //light off
+  }
+  Serial.print("mod pin is ");
+  Serial.println(isPressed(moderator_pin));
+  if (!digitalRead((moderator_pin))) {
+    resetAnswers();
   }
   
   i = (i + 1) % 7;//cycle thru 7 contestants
@@ -83,8 +97,8 @@ void setAnswerState(int contestant, boolean set) {
     hasAnswered[contestant] = set;
 }
 
-boolean isPressed(unsigned int pin) { // All the switches are pulled up
-  if (digitalRead(pin)) //-------------- meaning that it is HIGH by 
+boolean isPressed(unsigned int i) { // All the switches are pulled up
+  if (digitalRead(contest_pin[i])) //-------------- meaning that it is HIGH by 
     return false; //-------------------- default and has an active LOW
   else 
     return true;
