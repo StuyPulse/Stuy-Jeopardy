@@ -109,8 +109,8 @@ void resetAnswers() {
     hasAnswered[i] = false;
 }
 
-void lightSet(unsigned int light_pin, boolean state) {
-  digitalWrite(light_pin, state);
+void lightSet(unsigned int i, boolean state) {
+  digitalWrite(contest_light[i], state);
 }
 
 void signalStart(unsigned int speaker_line) {
