@@ -77,7 +77,7 @@ void loop() {
   Serial.print("mod pin is ");
   Serial.println(isPressed(moderator_pin));
   if (!digitalRead((moderator_pin))) {
-    resetAnswers();
+    //resetAnswers();
   }
   
   i = (i + 1) % 7;//cycle thru 7 contestants
@@ -110,13 +110,14 @@ void resetAnswers() {
 }
 
 void lightSet(unsigned int i, boolean state) {
-  digitalWrite(contest_light[i], state);
+  digitalWrite(contest_light[7 - i - 1], state);
 }
 
 void signalStart(unsigned int speaker_line) {
   int frequency = 150;
   int duration = 200;
-  
+
+
   tone(speaker_line, frequency);
   delay(duration);
   noTone(speaker_line);
