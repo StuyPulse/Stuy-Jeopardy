@@ -44,8 +44,9 @@ void setup() {
 
 void loop() {
   Serial.print("loop conditions: ");
-  Serial.print(isPressed(i)); Serial.print(", ");
-  Serial.println( (getAnsweredState(i) == false) );
+  Serial.print(i); Serial.print(", ");
+  Serial.print(" isPressed "); Serial.print(isPressed(i)); Serial.print(", ");
+  Serial.print(" hasAnswered "); Serial.print( getAnsweredState(i) ); Serial.print(", ");
   if (isPressed(i) && (getAnsweredState(i) == false)) {
     Serial.print("i is ");
     Serial.println(i);
@@ -66,19 +67,24 @@ void loop() {
       }
     }
     
-    if (correct_answer)
+    if (correct_answer){
       resetAnswers();
-    else
+      correct_answer = false;
+    }else{
       setAnswerState(i, true);
+    }
     
     signalEnd(claxon_pin); // signal that the waiting period is over or question has been answered
     lightSet(i, LOW); //light off
   }
   Serial.print("mod pin is ");
-  Serial.println(isPressed(moderator_pin));
+  Serial.println(!digitalRead((moderator_pin)));
   if (!digitalRead((moderator_pin))) {
-    //resetAnswers();
+    resetAnswers();
   }
+  
+//  if (hasEveryoneAnswered() && !digitalRead((moderator_pin)))
+//  resetAnswers();
   
   i = (i + 1) % 7;//cycle thru 7 contestants
 }
@@ -90,11 +96,16 @@ boolean getAnsweredState(int contestant) {
     return hasAnswered[contestant];
 }
 
+boolean hasEveryoneAnswered() {
+  return hasAnswered[0] && hasAnswered[1] && hasAnswered[2] && hasAnswered[3];
+}
+
 void setAnswerState(int contestant, boolean set) {
   if (contestant > 2)
     hasAnswered[3] = set;
   else
     hasAnswered[contestant] = set;
+  Serial.print(getAnsweredState(contestant));
 }
 
 boolean isPressed(unsigned int i) { // All the switches are pulled up
